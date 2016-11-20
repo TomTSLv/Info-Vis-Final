@@ -7,7 +7,9 @@
 <body>
 	<script type="text/javascript">
 		var width = 960;
-		var height = 400;
+		var height = 500;
+
+		var testCenters = new Array();
 
 		var projection = d3.geo.albersUsa()
 								.translate([width/2, height/2])
@@ -21,7 +23,7 @@
 					.attr("width",width)
 					.attr("height", height);
 
-		d3.json("us-states.json",function(json){
+		var json = d3.json("us-states.json",function(json){
 			svg.selectAll("path")
 				.data(json.features)
 				.enter()
@@ -30,6 +32,35 @@
 				.style("stroke", "#000000")
 				.style("stroke-wdith", "1")	
 				.style("fill","fff");
-		})
+
+				loadTestCenter();
+
+		});
+
+		function loadTestCenter(){
+			var pointData = d3.csv("../Data/ACT_AllPointsFile.csv",function(error, data){
+				data.forEach(function(d){
+					if (d.POINTTYPE==="TESTCENTER"){
+						testCenters.push(d);
+					}
+				})
+				addPoints(testCenters);
+			});
+		}
+
+		function addPoints(testCenters){
+			svg.selectAll("circle")
+				.data(testCenters)
+				.enter()
+				.append("circle")
+				.attr("cx",function(d){
+					return projection([d.LONGITUDE, d.LATITUDE])[0];
+				})
+				.attr("cy", function(d){
+					return projection([d.LONGITUDE, d.LATITUDE])[1];
+				})
+				.attr("r","2")
+				.style("fill", "red")
+		}
 	</script>
 </html>
