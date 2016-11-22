@@ -6,13 +6,17 @@
 </head>
 <body>
 	<script type="text/javascript">
-		var width = 960;
-		var height = 500;
+		var width = 1000;
+		var height = 600;
+		var mapHeight = 500;
+		var centered;
 
+		var map;
 		var testCenters = new Array();
+		var updateTestCenters;
 
 		var projection = d3.geo.albersUsa()
-								.translate([width/2, height/2])
+								.translate([width/2, mapHeight/2])
 								.scale([1000]);
 
 		var path = d3.geo.path()
@@ -23,22 +27,29 @@
 					.attr("width",width)
 					.attr("height", height);
 
+		var g = svg.append("g")
+				.attr("width", width)
+				.attr("height", mapHeight)
+				.attr("transform","translate(0,100)");
+
 		var json = d3.json("us-states.json",function(json){
-			svg.selectAll("path")
+			map=json.features;
+			g.selectAll("path")
 				.data(json.features)
 				.enter()
 				.append("path")
 				.attr("d", path)
 				.style("stroke", "#000000")
-				.style("stroke-wdith", "1")	
-				.style("fill","fff");
+				.style("stroke-width", "1")	
+				.style("fill","fff")
+				.on("click",clicked);
 
 				loadTestCenter();
 
 		});
 
 		function loadTestCenter(){
-			var pointData = d3.csv("../Data/ACT_AllPointsFile.csv",function(error, data){
+			var pointData = d3.csv("./Data/ACT_AllPointsFile.csv",function(error, data){
 				data.forEach(function(d){
 					if (d.POINTTYPE==="TESTCENTER"){
 						testCenters.push(d);
@@ -48,8 +59,22 @@
 			});
 		}
 
+		function updateTestCenter(state){
+			updateTestCenters = new Array();
+
+			testCenters.forEach(function(d){
+				var vertex = state.geometry.coordinates;
+				for (i = 0,  j = vertex.length - 1; i < vertex.length; j = i++){
+					if ((vertex[i][1]>d.LATITUDE) !== (vertex[j][1]>d.LATITUDE) &&
+						(d.LONGITUDE < (vertex[j][0]-vertex[i][0]) * (d.LATITUDE-vertex[i][1]) / (vertex[j][1]-vertex[i][1]) + vertex[i][0])){
+							updateTestCenters.push(d);
+					}
+				}
+			});
+		}
+
 		function addPoints(testCenters){
-			svg.selectAll("circle")
+			g.selectAll("circle")
 				.data(testCenters)
 				.enter()
 				.append("circle")
@@ -60,7 +85,69 @@
 					return projection([d.LONGITUDE, d.LATITUDE])[1];
 				})
 				.attr("r","2")
-				.style("fill", "red")
+				.style("fill", "blue");
+		}
+
+
+		function clicked(d){
+			var x, y, k;
+			if (d && centered !== d){
+				var center = path.centroid(d);
+				x = center[0];
+				y = center[1];
+				k = 4;
+				centered = d;
+
+				var selectedState = new Array();
+
+				selectedState.push(centered);
+
+				var update = g.selectAll("path")
+						.data(selectedState);
+				update.exit().remove();
+				update.attr("d",path);
+
+				updateTestCenter(centered);
+
+				var pointUpdate = g.selectAll("circle")
+									.data(updateTestCenters);
+				pointUpdate.exit().remove();
+				update.attr("d",path);
+
+			}
+
+			else{
+
+				x = width / 2;
+				y = mapHeight / 2;
+				k = 1;
+				centered = null;
+
+				console.log(map);
+
+				var update = g.selectAll("path")
+						.data(map);
+				update.enter().append("path")
+						.style("stroke", "#000000")
+						.style("stroke-width", "1")	
+						.style("fill","fff");
+				update.attr("d",path).on("click",clicked);
+
+				g.selectAll("circle").remove();
+				addPoints(testCenters)
+
+			}
+
+			// g.selectAll("path")
+			// 	.classed("active", centered && function(d){return d === centered;});
+
+			g.transition()
+				.duration(750)
+				.attr("transform", "translate(" + width/ 2 + "," + mapHeight / 2 + ")scale(" + k + ")translate(" + -x + "," + -y + ")")
+				.style("stroke-width", 1.5 / k +"px");
+
+			g.selectAll("circle")
+				.attr ("r", 2 / k);
 		}
 	</script>
 </html>
