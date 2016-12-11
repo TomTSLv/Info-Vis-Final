@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>GDP per capita VS Ease of Business</title>
+	
+	<script type="text/javascript" src="http://d3js.org/d3.v3.min.js"></script>
+	
+	<style type="text/css">
+		svg{
+            width: 800px;
+            height:600px;
+        }
+
+        .paint{
+        	margin-left: 100px;
+        }
+
+		.xaxis path,
+		.xaxis line{
+			fill: none;
+			stroke: black;
+			shape-rendering: crispEdges;
+		}
+
+		.xaxis text {
+			font-family: sans-serif;
+			font-size: 9px;
+		}
+
+		.yaxis path,
+		.yaxis line{
+			fill: none;
+			stroke: black;
+			shape-rendering: crispEdges;
+		}
+
+		.yaxis text {
+			font-family: sans-serif;
+			font-size: 9px;
+		}
+
+		.info {
+			font-family: sans-serif;
+			font-size: 11px;
+			position: absolute;
+			width: 400px;
+			height: 300px;
+			left: 900px;
+			top: 100px;
+			position: fixed;
+			pointer-events: none;
+			/*background-color: rgba(125,125,0,125);*/
+		}
+
+		.info1 {
+			font-family: sans-serif;
+			font-size: 11px;
+			position: absolute;
+			width: 400px;
+			height: 300px;
+			left: 1100px;
+			top: 100px;
+			position: fixed;
+			pointer-events: none;
+			/*background-color: rgba(125,125,0,125);*/
+		}
+
+		a.nav{
+			font-family: verdana;
+			font-size: 25px;
+			color: #57068c;
+		}
+		a.nav:hover{
+			color: #1E90FF;
+		}
+		a.nav:visited{
+			color: #4169E1;
+		}
+		a.nav:link{
+			text-decoration: none;
+		}
+		a.content{
+			color: #57068c;
+		}
+		a.content:link{
+			text-decoration: none;
+		}
+		a.content:hover{
+			color: #1E90FF;
+		}
+
+		.counties {
+		  fill: none;
+		}
+
+		.states {
+		  fill: none;
+		  stroke: #fff;
+		  stroke-linejoin: round;
+		}
+
+        .axis path,  
+        .axis line {  
+            fill: none;  
+            stroke: black;  
+            -webkit-shape-rendering: crispEdges;  
+            -moz-shape-rendering: crispEdges;  
+            -ms-shape-rendering: crispEdges;  
+            -o-shape-rendering: crispEdges;  
+            shape-rendering: crispEdges;  
+        }  
+  
+        .referline{  
+            stroke-width:5px;  
+            stroke: black;  
+        }  
+  
+        .axis text {  
+            font-family: sans-serif;  
+            font-size: 12px;  
+            fill: #000000 !important;  
+        }  
+
+        .bar {
+		  fill: brown;
+		  pointer-events: all;
+		}
+
+		.bar:hover {
+			fill: brown;
+		}
+
+		.window{
+			font-family: sans-serif;
+			font-size: 11px;
+			position: absolute;
+			width: 200px;
+			height: 28px;
+			background-color: rgb(255,255,255);
+			pointer-events: none;
+		}
+	</style>
+</head>
+
+<body>
+	<div id="navigator">
+		&nbsp&nbsp&nbsp&nbsp<a href="index.html" class="nav">General View</a>
+		&nbsp&nbsp&nbsp&nbsp<a href="utility.html" class="nav">Utility Summary</a>&nbsp&nbsp&nbsp&nbsp&nbsp
+	</div>
+
+	<div id="paint">
+		<svg style = "position: fixed; top: 80px;"></svg>
+		<svg id = "svg1" style = "position: fixed; top: 350px;"></svg>
+	</div>
+
+	<div id = "general" class = "info">
+		<p id = "infoTotal"></p>
+	</div>
+
+	<div id = "info" class = "info">
+		<p id = "infoName"></p>
+		<svg id = "chart1" style = "width: 220px; height: 100px; left: 900px; top: 170px; position: fixed"></svg>
+		<svg id = "chart2" style = "width: 220px; height: 100px; left: 900px; top: 320px; position: fixed"></svg>
+		<svg id = "chart3" style = "width: 220px; height: 100px; left: 900px; top: 470px; position: fixed"></svg>
+	</div>
+
+	<div id = "info1" class = "info1">
+		<p id = "infoName1"></p>
+		<svg id = "chart4" style = "width: 220px; height: 100px; left: 1100px; top: 170px; position: fixed"></svg>
+		<svg id = "chart5" style = "width: 220px; height: 100px; left: 1100px; top: 320px; position: fixed"></svg>
+		<svg id = "chart6" style = "width: 220px; height: 100px; left: 1100px; top: 470px; position: fixed"></svg>
+	</div>
+
+	<p id="detail"></p>
+	<script>
+		var pointClicked = false;
+		var first = true;
+		var stick = false;
+
+		var margin = {top: 20, right: 20, bottom: 20, left: 40},
+			width = 600 - margin.left - margin.right,
+			height = 300 - margin.top - margin.bottom;
+
+		var dotinfo = d3.select("#info")
+			.style("opacity", 0);
+		var dotinfo1 = d3.select("#info1")
+			.style("opacity", 0);
+		var generalinfo = d3.select("#general")
+			.style("opacity", 1);
+
+		var data = new Array;
+		var strX;
+		var strY;
+		var testEvents = new Array();
+		var stateView = false;
+
+		var testevent=d3.csv("ACT_TestEvents.csv",function(data){
+				data.forEach(function(d){
+					d["UTILITY"] = +Number(d["UTILITY"]);
+					d["CAPACITY"] = +Number(d["CAPACITY"]);
+					d["ASSIGNED"] = +Number(d["ASSIGNED"]);
+					d["EXPENSE"] = +Number(d["EXPENSE"]);
+					testEvents.push(d);
+				});
+			});
+
+		d3.csv("ACT_AllPointsFile.csv", function(error, csvdata){
+			if (error){
+				console.log(error);
+			}csvdata.forEach(function(d){
+					if (d.POINTTYPE==="TESTCENTER"){
+						d["ave_u"]= +d["ave_u"];
+						data.push(d);
+					}
+				});
+
+			draw(false, 1,0);
+			draw1(false,1,0);
+
+		});
+
+		var zoom = d3.behavior.zoom()
+					.scaleExtent([1,5])
+					.on("zoom", zoomed);
+
+		function zoomed() {
+			var position = d3.mouse(document.getElementById("paint"));
+			if(position[1]<300 && position[0]<600){
+				draw(true, d3.event.scale, position);
+			}else if (position[1]>300 && position[0]<600){
+				draw1(true, d3.event.scale, position);
+			}
+		}
+
+		function draw(yes, zoom_scale, position){
+			console.log(data);
+
+			var scaleX=d3.scale.linear()
+				.range([40,width]);
+
+			var scaleY=d3.scale.linear()
+				.range([height,20]);
+
+			var xd = data.map(function (d) {  
+                return d.ave_e;  
+            });  
+
+            var yd = data.map(function (d) {  
+                return d.ave_ca;  
+            }); 
+
+			
+			if (zoom_scale>1){
+				var xbelow, ybelow, xtop, ytop;
+				var xscale = (position[0]-40) / 500;
+				var yscale = (360-position[1]) / 320;
+				var coefficient = (11 - zoom_scale) / 10;
+				var xmax = 16000;
+				var xmin = 0;
+				var xrange = xmax - xmin;
+				var ymax = 2800;
+				var ymin = 0;
+				var yrange = ymax - ymin;
+				// data_used = data.filter(function(d){
+				// 	return d[strX]>=xmin+xscale*xrange-coefficient*xrange/2 && d[strX]<=xmin+xscale*xrange+coefficient*xrange/2 && d[strY]>=ymin+yscale*yrange-coefficient*yrange/2 && d[strY]<=ymin+yscale*yrange+coefficient*yrange/2;
+				// });	
+				// xValue=function(d){return d[strX];},
+				// 	xMap=function(d){return scaleX(xValue(d));};
+				// yValue=function(d){return d[strY];},
+				// 	yMap = function(d) { return scaleY(yValue(d));};
+				xbelow = 0;
+				xtop = xmax - 2000*zoom_scale;
+				ybelow = 0;
+				ytop = ymax - 400 * zoom_scale;
+				scaleX.domain([xbelow, xtop]);
+				scaleY.domain([ybelow, ytop]);
+				scaleX.domain([xbelow, xtop]);
+				scaleY.domain([ybelow, ytop]);
+			}else{
+				scaleX.domain([0, 16000]);
+				scaleY.domain([0, 2800]);
+			}
+
+
+			var axisX=d3.svg.axis()
+				.scale(scaleX)
+				.orient("bottom");
+			var axisY=d3.svg.axis()
+				.scale(scaleY)
+				.orient("left");
+
+			if (!yes){
+				d3.select("svg")
+					.attr("width", width + margin.left + margin.right)
+					.attr("height", height + margin.top + margin.bottom)
+					.call(zoom);
+
+				d3.select("svg").append("g")
+					.attr("class", "xaxis")
+					.attr("transform", "translate(0," + height + ")")
+					.call(axisX)
+					.append("text")
+					.attr("class", "xlabel")
+					.attr("x", width)
+					.attr("y", -6)
+					.style("text-anchor", "end")
+					.text("Expense");
+
+				d3.select("svg").append("g")
+					.attr("class", "yaxis")
+					.attr("transform", "translate(40,0)")
+					.call(axisY)
+					.append("text")
+					.attr("class", "ylabel")
+					.attr("transform", "rotate(-90)")
+					.attr("y", 6)
+					.attr("dy", ".71em")
+					.style("text-anchor", "end")
+					.text("Capacity");
+			}else{
+				d3.select("svg")
+					.select(".xaxis")
+					.transition()
+					.call(axisX);
+
+				d3.select("svg")
+					.select(".yaxis")
+					.transition()
+					.call(axisY);
+
+			}
+
+			var svg=d3.select("svg").selectAll("circle").data(data)
+
+			svg.enter().append("circle")
+				.attr("class", "dot")
+				.attr("r", 1)
+				.attr("cx", function(d){return scaleX(d.ave_e);})
+				.attr("cy", function(d){return scaleY(d.ave_ca);})
+				.style("fill", "red") 
+				.style("opacity", .5)
+				.on("click",clickedPoint)
+				.on("mouseover", appear)
+				.on("mouseout", disappear); 
+
+				svg.transition()
+                .duration(1000)
+                .attr({
+                    cx: function(d){return scaleX(d.ave_e);},
+                    cy: function(d){return scaleY(d.ave_ca);},
+                    r:1
+                }); 
+
+                svg.exit().remove();
+			}
+
+			function clickedPoint(d){
+			if (pointClicked === false && stick === false){
+				pointClicked = !pointClicked;
+			}else if (pointClicked === true && stick === false){
+				stick = !stick;
+			}else if (pointClicked === true && stick === true){
+				stick = false;
+				pointClicked = false;
+			}
+		}
+
+		function appear(ds){
+			if(!pointClicked){
+				if (!stateView){
+					var newR = 3;
+				}else{
+					var newR = 1.5;
+				}
+				d3.select(this).attr("r", newR)
+					.style("fill", "blue");
+				generalinfo.transition()
+					.duration(200)
+					.style("opacity", 0);
+				var tempArray = new Array();
+				dotinfo.transition()
+					.duration(200)
+					.style("opacity", 1);
+				document.getElementById('infoName').innerHTML="TYPE: " + ds["TCTYPE"] + "<br/>" + "NAME: " + ds["INSTITUTION"] + "<br/>" + "ID: " + ds["TESTCENTERID"]+" "+ds["ave_e"]; 
+				// console.log(testEvents);
+				testEvents.forEach(function(d){
+						// console.log(d.TESTCENTERID + " " + ds.TESTCENTERID);
+					if(d.TestCenterID === ds.TESTCENTERID){
+						tempArray.push(d);
+					}
+				});draw_chart(tempArray, "CAPACITY", "#chart1");
+				draw_chart(tempArray, "ASSIGNED", "#chart2");
+				draw_chart(tempArray, "EXPENSE", "#chart3");
+			}else if (!stick){
+				if (!stateView){
+					var newR = 3;
+				}else{
+					var newR = 1.5;
+				}
+				d3.select(this).attr("r", newR)
+					.style("fill", "green");
+				var tempArray = new Array();
+				dotinfo1.transition()
+					.duration(200)
+					.style("opacity", 1);
+				document.getElementById('infoName1').innerHTML="TYPE: " + ds["TCTYPE"] + "<br/>" + "NAME: " + ds["INSTITUTION"] + "<br/>" + "ID: " + ds["TESTCENTERID"]; 
+				// console.log(testEvents);
+				testEvents.forEach(function(d){
+						// console.log(d.TESTCENTERID + " " + ds.TESTCENTERID);
+					if(d.TestCenterID === ds.TESTCENTERID){
+						tempArray.push(d);
+					}
+				});draw_chart(tempArray, "CAPACITY", "#chart4");
+				draw_chart(tempArray, "ASSIGNED", "#chart5");
+				draw_chart(tempArray, "EXPENSE", "#chart6");
+			}
+		}
+
+		function disappear(d){
+			if (!pointClicked){
+				if (!stateView){
+					var newR = 1;
+				}else{
+					var newR = 0.5;
+				}
+				d3.select(this).attr("r", newR)
+					.style("fill", "red");
+				dotinfo.transition()
+					.duration(200)
+					.style("opacity", 0);
+				dotinfo.selectAll("rect").remove();
+				dotinfo.selectAll("g").remove();
+				dotinfo1.transition()
+					.duration(200)
+					.style("opacity", 0);
+				dotinfo1.selectAll("rect").remove();
+				dotinfo1.selectAll("g").remove();
+				generalinfo.transition()
+					.duration(200)
+					.style("opacity", 1); 
+				if (first){
+					first = false;
+					document.getElementById('infoTotal').innerHTML="Total Test Center: " + data.length + "<br/>" + "Total Test Event: " + testEvents.length + "<br/>" + "TESTCENTER ID From: " + d3.min(data, function(d){return d.TESTCENTERID})+" To "+d3.max(data,function(d){return d.TESTCENTERID})+"<br/>"+"TESTEVENT ID From: " + d3.min(testEvents, function(d){return d.TestEventID})+" To "+d3.max(testEvents,function(d){return d.TestEventID});
+				}
+			}else if (!stick){
+				if (!stateView){
+					var newR = 1;
+				}else{
+					var newR = 0.5;
+				}
+				d3.select(this).attr("r", newR)
+					.style("fill", "red");
+				dotinfo1.transition()
+					.duration(200)
+					.style("opacity", 0);
+				dotinfo1.selectAll("rect").remove();
+				dotinfo1.selectAll("g").remove();
+				// console.log("y");
+			}
+		}
+
+		function draw_chart(data, category, chartName){ 
+			var svg1 = d3.select(chartName),
+				margin1 = {top: 20, right: 5, bottom: 5, left: 40};
+				width1 = 150 - margin1.left - margin1.right,
+    			height1 = 100 - margin1.top - margin1.bottom;
+
+    		var xd = data.map(function (d) {  
+                return d.TESTDATE;  
+            });  
+
+            var yd = data.map(function (d) {  
+                return +d[category];  
+            }); 
+
+			var x = d3.scale.ordinal().domain(xd).rangeBands([0, width1], 0.5)
+		    var y = d3.scale.linear().domain([0, d3.max(yd, function (d) { return d; })])  
+                 .range([height1, 0]);  
+
+            // console.log(height1+" "+width1);
+
+            var xAxis = d3.svg.axis().scale(x).orient("bottom");  
+            var yAxis = d3.svg.axis().scale(y).orient("left").ticks(4);  
+            var band = x.rangeBand();  
+            var ranges = x.range();  
+
+			var g1 = svg1.append("g")
+				.attr("id", "subchart")
+			    .attr("transform", "translate(" + margin1.left + "," + margin1.top + ")");
+
+			g1.append("g")
+			  .attr("class", "axis axis--x")
+			  .attr("transform", "translate(0," + height1 + ")")
+			  .call(xAxis);
+
+			g1.append("g")
+			  .attr("class", "axis axis--y")
+			  .call(yAxis)
+			.append("text")
+			  .attr("x",20)
+			  .attr("y", -15)
+			  .attr("dy", "0.71em")
+			  .attr("text-anchor", "end")
+			  .text(category);
+
+			g1.selectAll(".bar")
+			  .data(data)
+			  .enter().append("rect")
+			  .attr("class", "bar")
+			  .attr("x", function(d) { return x(d.TESTDATE); })
+			  .attr("y", function(d) { return y(d[category]); })
+			  .attr("width", band)
+			  .attr("height", function(d) { return height1 - y(d[category]); })
+			 	.on("click", function(d){
+			 		console.log("y");
+			 	})
+			 	.on("mouseover", function(d) {
+			  		console.log("y");
+				 	infoWindow.transition()
+						.duration(200)
+						.style("opacity", .9);
+					infoWindow.html(d["TESTDATE"] + "<br/>" +d[category])
+						.style("left", (d3.event.pageX + 5) + "px")
+						.style("top", (d3.event.pageY - 28) + "px");
+				})
+				.on("mouseout", function(d) {
+					infoWindow.transition()
+						.duration(500)
+						.style("opacity", 0);
+				});
+		}
+
+		function draw1(yes, zoom_scale, position){
+			console.log(data);
+
+			var scaleX=d3.scale.linear()
+				.range([40,width]);
+
+			var scaleY=d3.scale.linear()
+				.range([height,20]);
+
+			var xd = data.map(function (d) {  
+                return d.ave_e;  
+            });  
+
+            var yd = data.map(function (d) {  
+                return d.ave_as;  
+            }); 
+
+			
+			if (zoom_scale>1){
+				var xbelow, ybelow, xtop, ytop;
+				var xscale = (position[0]-40) / 500;
+				var yscale = (360-position[1]) / 320;
+				var coefficient = (11 - zoom_scale) / 10;
+				var xmax = 16000;
+				var xmin = 0;
+				var xrange = xmax - xmin;
+				var ymax = 950;
+				var ymin = 0;
+				var yrange = ymax - ymin;
+				// data_used = data.filter(function(d){
+				// 	return d[strX]>=xmin+xscale*xrange-coefficient*xrange/2 && d[strX]<=xmin+xscale*xrange+coefficient*xrange/2 && d[strY]>=ymin+yscale*yrange-coefficient*yrange/2 && d[strY]<=ymin+yscale*yrange+coefficient*yrange/2;
+				// });	
+				// xValue=function(d){return d[strX];},
+				// 	xMap=function(d){return scaleX(xValue(d));};
+				// yValue=function(d){return d[strY];},
+				// 	yMap = function(d) { return scaleY(yValue(d));};
+				xbelow = 0;
+				xtop = xmax - 2000*zoom_scale;
+				ybelow = 0;
+				ytop = ymax - 150 * zoom_scale;
+				scaleX.domain([xbelow, xtop]);
+				scaleY.domain([ybelow, ytop]);
+			}else{
+				scaleX.domain([0, 16000]);
+				scaleY.domain([0, 950]);
+			}
+
+
+			var axisX=d3.svg.axis()
+				.scale(scaleX)
+				.orient("bottom");
+			var axisY=d3.svg.axis()
+				.scale(scaleY)
+				.orient("left");
+
+			if (!yes){
+				d3.select("#svg1")
+					.attr("width", width + margin.left + margin.right)
+					.attr("height", height + margin.top + margin.bottom)
+					.call(zoom);
+
+				d3.select("#svg1").append("g")
+					.attr("class", "xaxis")
+					.attr("transform", "translate(0," + height + ")")
+					.call(axisX)
+					.append("text")
+					.attr("class", "xlabel")
+					.attr("x", width)
+					.attr("y", -6)
+					.style("text-anchor", "end")
+					.text("Expense");
+
+				d3.select("#svg1").append("g")
+					.attr("class", "yaxis")
+					.attr("transform", "translate(40,0)")
+					.call(axisY)
+					.append("text")
+					.attr("class", "ylabel")
+					.attr("transform", "rotate(-90)")
+					.attr("y", 6)
+					.attr("dy", ".71em")
+					.style("text-anchor", "end")
+					.text("ASSIGNED");
+			}else{
+				d3.select("#svg1")
+					.select(".xaxis")
+					.transition()
+					.call(axisX);
+
+				d3.select("#svg1")
+					.select(".yaxis")
+					.transition()
+					.call(axisY);
+
+			}
+
+			var svg=d3.select("#svg1").selectAll("circle").data(data)
+
+			svg.enter().append("circle")
+				.attr("class", "dot")
+				.attr("r", 1)
+				.attr("cx", function(d){return scaleX(d.ave_e);})
+				.attr("cy", function(d){return scaleY(d.ave_as);})
+				.style("fill", "darkblue") 
+				.style("opacity", .5)
+				.on("click",clickedPoint)
+				.on("mouseover", appear)
+				.on("mouseout", disappear); 
+
+				svg.transition()
+                .duration(1000)
+                .attr({
+                    cx: function(d){return scaleX(d.ave_e);},
+                    cy: function(d){return scaleY(d.ave_as);},
+                    r:1
+                }); 
+
+                svg.exit().remove();
+			}
+
+	</script>
+	
+</body>
+</html>
