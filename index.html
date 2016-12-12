@@ -8,11 +8,10 @@
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
 	<script src="d3.slider.js"></script>
 	<style type="text/css">
-		.s{
-			position: fixed;
+/*		.s{
 			top: 600px;
 			width: 1200px;
-		}
+		}*/
 
 		.info {
 			font-family: sans-serif;
@@ -243,6 +242,9 @@
 				});
 				addPoints(testCenters,"blue");
 				addUtility();
+				addCapacity();
+				addAssigned();
+				addExpense();
 			});
 			var testevent=d3.csv("ACT_TestEvents.csv",function(data){
 				data.forEach(function(d){
@@ -762,16 +764,87 @@
 
 
 		function addUtility(){
+			var slidername = d3.select("body").append("p").attr("id","util");
+			document.getElementById("util").innerHTML="Utility: ";
 			var sliderdiv = d3.select("body").append("div")
-							.attr("id","slider")
+							.attr("id","sliderutil")
 							.attr("class", "s");
-			var slider = d3.select("#slider").call(
+			var slider = d3.select("#sliderutil").call(
 				d3.slider().axis(true).min(0).max(1).step(0.1)
 				.on("slide",function(evt,value){
 					console.log(value);
 					var newData = new Array();
 					testCenters.forEach(function(d){
 						if (d["ave_u"] >  value){
+							newData.push(d);
+						}
+					});
+					g.selectAll("circle").remove();
+					addPoints(newData,"blue");
+					document.getElementById('infoTotal').innerHTML="Total Test Center: " + newData.length + "<br/>"+ "TESTCENTER ID From: " + d3.min(newData, function(d){return d.TESTCENTERID})+" To "+d3.max(newData,function(d){return d.TESTCENTERID})+"<br/>"
+				})
+			);
+		}
+
+		function addCapacity(){
+			var slidername = d3.select("body").append("p").attr("id","cap");
+			document.getElementById("cap").innerHTML="Capacity: ";
+			var sliderdiv = d3.select("body").append("div")
+							.attr("id","slidercap")
+							.attr("class", "s");
+			var slider = d3.select("#slidercap").call(
+				d3.slider().axis(true).min(0).max(3600).step(200)
+				.on("slide",function(evt,value){
+					console.log(value);
+					var newData = new Array();
+					testCenters.forEach(function(d){
+						if (d["ave_ca"] >  value){
+							newData.push(d);
+						}
+					});
+					g.selectAll("circle").remove();
+					addPoints(newData,"blue");
+					document.getElementById('infoTotal').innerHTML="Total Test Center: " + newData.length + "<br/>"+ "TESTCENTER ID From: " + d3.min(newData, function(d){return d.TESTCENTERID})+" To "+d3.max(newData,function(d){return d.TESTCENTERID})+"<br/>"
+				})
+			);
+		}
+
+		function addAssigned(){
+			var slidername = d3.select("body").append("p").attr("id","ass");
+			document.getElementById("ass").innerHTML="Assigned: ";
+			var sliderdiv = d3.select("body").append("div")
+							.attr("id","sliderass")
+							.attr("class", "s");
+			var slider = d3.select("#sliderass").call(
+				d3.slider().axis(true).min(0).max(1000).step(100)
+				.on("slide",function(evt,value){
+					console.log(value);
+					var newData = new Array();
+					testCenters.forEach(function(d){
+						if (d["ave_as"] >  value){
+							newData.push(d);
+						}
+					});
+					g.selectAll("circle").remove();
+					addPoints(newData,"blue");
+					document.getElementById('infoTotal').innerHTML="Total Test Center: " + newData.length + "<br/>"+ "TESTCENTER ID From: " + d3.min(newData, function(d){return d.TESTCENTERID})+" To "+d3.max(newData,function(d){return d.TESTCENTERID})+"<br/>"
+				})
+			);
+		}
+
+		function addExpense(){
+			var slidername = d3.select("body").append("p").attr("id","exp");
+			document.getElementById("exp").innerHTML="Expense: ";
+			var sliderdiv = d3.select("body").append("div")
+							.attr("id","sliderexp")
+							.attr("class", "s");
+			var slider = d3.select("#sliderexp").call(
+				d3.slider().axis(true).min(0).max(30000).step(2000)
+				.on("slide",function(evt,value){
+					console.log(value);
+					var newData = new Array();
+					testCenters.forEach(function(d){
+						if (d["ave_e"] >  value){
 							newData.push(d);
 						}
 					});
