@@ -146,7 +146,7 @@
 <body>
 	<div id="navigator">
 		&nbsp&nbsp&nbsp&nbsp<a href="index.html" class="nav">General View</a>
-		&nbsp&nbsp&nbsp&nbsp<a href="utility.html" class="nav">Utility Summary</a>&nbsp&nbsp&nbsp&nbsp&nbsp
+		&nbsp&nbsp&nbsp&nbsp<a href="index2.html" class="nav">Utility Summary</a>&nbsp&nbsp&nbsp&nbsp&nbsp
 	</div>
 
 	<div id="paint">
@@ -335,10 +335,11 @@
 
 			svg.enter().append("circle")
 				.attr("class", "dot")
+				.attr("id", function(d){return "a"+d.TESTCENTERID;})
 				.attr("r", 1)
 				.attr("cx", function(d){return scaleX(d.ave_e);})
 				.attr("cy", function(d){return scaleY(d.ave_ca);})
-				.style("fill", "red") 
+				.style("fill", "pink") 
 				.style("opacity", .5)
 				.on("click",clickedPoint)
 				.on("mouseover", appear)
@@ -373,8 +374,12 @@
 				}else{
 					var newR = 1.5;
 				}
-				d3.select(this).attr("r", newR)
-					.style("fill", "blue");
+				var id = this.getAttribute("id").slice(1);
+				console.log(id);
+				d3.select("#a"+id).attr("r", newR)
+					.style("fill", "black");
+				d3.select("#b"+id).attr("r",newR)
+					.style("fill", "black");
 				generalinfo.transition()
 					.duration(200)
 					.style("opacity", 0);
@@ -398,7 +403,10 @@
 				}else{
 					var newR = 1.5;
 				}
-				d3.select(this).attr("r", newR)
+				var id = this.getAttribute("id").slice(1);
+				d3.select("#a"+id).attr("r", newR)
+					.style("fill", "green");
+				d3.select("#b"+id).attr("r",newR)
 					.style("fill", "green");
 				var tempArray = new Array();
 				dotinfo1.transition()
@@ -424,8 +432,11 @@
 				}else{
 					var newR = 0.5;
 				}
-				d3.select(this).attr("r", newR)
-					.style("fill", "red");
+				var id = this.getAttribute("id").slice(1);
+				d3.select("#a"+id).attr("r", newR)
+					.style("fill", "pink");
+				d3.select("#b"+id).attr("r",newR)
+					.style("fill", "lightblue");
 				dotinfo.transition()
 					.duration(200)
 					.style("opacity", 0);
@@ -449,8 +460,11 @@
 				}else{
 					var newR = 0.5;
 				}
-				d3.select(this).attr("r", newR)
-					.style("fill", "red");
+				var id = this.getAttribute("id").slice(1);
+				d3.select("#a"+id).attr("r", newR)
+					.style("fill", "pink");
+				d3.select("#b"+id).attr("r",newR)
+					.style("fill", "lightblue");
 				dotinfo1.transition()
 					.duration(200)
 					.style("opacity", 0);
@@ -631,10 +645,11 @@
 
 			svg.enter().append("circle")
 				.attr("class", "dot")
+				.attr("id", function(d){return "b"+d.TESTCENTERID;})
 				.attr("r", 1)
 				.attr("cx", function(d){return scaleX(d.ave_e);})
 				.attr("cy", function(d){return scaleY(d.ave_as);})
-				.style("fill", "darkblue") 
+				.style("fill", "lightblue") 
 				.style("opacity", .5)
 				.on("click",clickedPoint)
 				.on("mouseover", appear)
